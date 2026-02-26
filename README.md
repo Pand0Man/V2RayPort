@@ -105,32 +105,42 @@ cmake --version
 
 Если `cl` не найден — ты не в developer-shell.
 
-### Шаг 4. Конфигурация CMake в VS Code UI
+### Шаг 4. Начиная с `CMake: Select a Kit` — максимально просто
 
-Через Command Palette (`Ctrl+Shift+P`):
-1. `CMake: Select a Kit` → выбери kit от Visual Studio 2022 (x64).
-2. `CMake: Configure`
-3. `CMake: Select Build Variant` → `Release`
-4. `CMake: Build`
+Открой Command Palette (`Ctrl+Shift+P`) и делай **ровно в таком порядке**:
 
-После успешной сборки exe будет в:
+1. `CMake: Scan for Kits`
+2. `CMake: Select a Kit`
+   - выбери пункт вроде: **Visual Studio Community 2022 Release - amd64**
+   - главное, чтобы было **2022** и **x64/amd64**
+3. `CMake: Select Build Variant` → выбери **Release**
+4. `CMake: Configure`
+5. `CMake: Build`
+
+Если всё ок, внизу VS Code будет `Build finished successfully`, а файл появится здесь:
 - `build\Release\V2RayPort.exe`
 
-### Шаг 5. Сборка через скрипт (самый надёжный вариант)
+### Шаг 5. Если в UI не получается — одна команда в PowerShell
 
-Если UI CMake Tools капризничает, запускай в терминале VS Code:
+В терминале VS Code (лучше Developer PowerShell) выполни **одну команду**:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -BuildDir build -Config Release -Generator "Visual Studio 17 2022" -Arch x64
 ```
 
-Что делает скрипт:
+Это самый надёжный вариант, потому что скрипт сам:
 - ищет `cmake` в `PATH`;
 - если не находит, ищет встроенный `cmake.exe` внутри Visual Studio;
 - предупреждает, если не найден `cl.exe`;
 - выполняет configure + build.
 
-### Шаг 6. Подтянуть runtime рядом с exe
+### Шаг 6. Альтернатива: тоже одной командой, но без скрипта
+
+```powershell
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64; if ($?) { cmake --build build --config Release }
+```
+
+### Шаг 7. Подтянуть runtime рядом с exe
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1
@@ -140,7 +150,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1
 - `build\Release\xray.exe`
 - `build\Release\wintun.dll`
 
-### Шаг 7. Запуск
+### Шаг 8. Запуск
 
 1. Запусти `build\Release\V2RayPort.exe`.
 2. Укажи пути к `xray.exe`, `config.json`, `wintun.dll`.
@@ -153,6 +163,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1
 ```powershell
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 cmake --build build --config Release
+```
+
+Или в одну строку:
+
+```powershell
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64; if ($?) { cmake --build build --config Release }
 ```
 
 ---

@@ -133,6 +133,24 @@ winget install Kitware.CMake
 
 3. Перезапусти PowerShell и повтори сборку.
 
+
+## Решение ошибки `#include <windows.h>`
+
+Если в IDE/сборке видишь ошибку на `#include <windows.h>` (файл не найден), значит не установлен Windows SDK или открыт не тот shell/компилятор.
+
+Сделай так:
+
+1. Установи workload **Desktop development with C++** в Visual Studio Installer.
+2. Убедись, что установлен компонент **Windows 10/11 SDK**.
+3. Открой **x64 Native Tools Command Prompt for VS 2022** или **Developer PowerShell for VS 2022**.
+4. Запусти сборку через скрипт:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
+```
+
+После этого `windows.h` должен определяться корректно.
+
 ## Ограничения текущего MVP
 
 - Пока это desktop-оболочка вокруг `xray.exe`, а не полный клон мобильного V2RayTun;

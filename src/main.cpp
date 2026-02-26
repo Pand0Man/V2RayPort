@@ -1,3 +1,13 @@
+#if !defined(_WIN32)
+#error "V2RayPort builds only on Windows. Use Visual Studio/MSVC on Windows 10/11."
+#endif
+
+#if defined(__has_include)
+#if !__has_include(<windows.h>)
+#error "windows.h not found. Install Windows SDK (10/11) and build from Visual Studio Developer PowerShell."
+#endif
+#endif
+
 #include <windows.h>
 #include <commctrl.h>
 #include <shellapi.h>

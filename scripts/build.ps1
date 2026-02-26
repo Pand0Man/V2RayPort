@@ -38,6 +38,13 @@ if (-not $cmakePath) {
     exit 1
 }
 
+
+$cl = Get-Command cl.exe -ErrorAction SilentlyContinue
+if (-not $cl) {
+    Write-Host "WARNING: cl.exe не найден в текущем shell." -ForegroundColor Yellow
+    Write-Host "Открой 'x64 Native Tools Command Prompt for VS 2022' или 'Developer PowerShell for VS 2022'." -ForegroundColor Yellow
+}
+
 Write-Host "Используется CMake: $cmakePath" -ForegroundColor Cyan
 & $cmakePath -S . -B $BuildDir -G $Generator -A $Arch
 & $cmakePath --build $BuildDir --config $Config

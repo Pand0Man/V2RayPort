@@ -63,6 +63,20 @@ cmake --version
 cl
 ```
 
+
+### Быстрый билд через скрипт (рекомендуется)
+
+Если в PowerShell ошибка вида **`cmake : Имя "cmake" не распознано...`**, используй:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
+```
+
+Скрипт:
+- пытается найти `cmake` в `PATH`;
+- если не находит — пытается использовать `cmake.exe`, встроенный в Visual Studio;
+- если не найдено ничего — печатает точные шаги установки.
+
 ### 2) Конфигурация проекта
 
 Из корня репозитория:
@@ -93,6 +107,31 @@ cmake --build build --config Release
 5. Нажми **«Запустить»**.
 
 ---
+
+
+## Решение ошибки "cmake не распознано"
+
+Если видишь ошибку как на скриншоте:
+
+```powershell
+cmake : Имя "cmake" не распознано как имя командлета...
+```
+
+Сделай так:
+
+1. Запусти авто-скрипт сборки:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
+```
+
+2. Если скрипт тоже не нашёл CMake, установи его:
+
+```powershell
+winget install Kitware.CMake
+```
+
+3. Перезапусти PowerShell и повтори сборку.
 
 ## Ограничения текущего MVP
 

@@ -1,8 +1,9 @@
 param(
-    [string]$BuildDir = "build",
+    [string]$BuildDir = ".build",
     [string]$Config = "Release",
     [string]$Generator = "auto",
-    [string]$Arch = "x64"
+    [string]$Arch = "x64",
+    [switch]$Clean
 )
 
 $ErrorActionPreference = "Stop"
@@ -75,6 +76,17 @@ function Select-Generator {
     }
 
     return $null
+}
+
+
+if (-not (Test-Path "CMakeLists.txt")) {
+    Write-Host "ERROR: CMakeLists.txt не найден. Запускай скрипт из корня репозитория V2RayPort." -ForegroundColor Red
+    exit 1
+}
+
+if ($Clean -and (Test-Path $BuildDir)) {
+    Write-Host "Очистка старой папки сборки: $BuildDir" -ForegroundColor Yellow
+    Remove-Item -Recurse -Force $BuildDir
 }
 
 $cmakePath = Resolve-CMakePath

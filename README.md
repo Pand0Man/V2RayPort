@@ -12,134 +12,109 @@
 
 ---
 
-## ВАЖНО: только командная сборка (без UI-шагов VS Code)
+## 0) Установка **Desktop development with C++** (подробно)
 
-Ниже только рабочие команды. Никаких `Select a Kit` и других UI-этапов.
+Если билд не работает, сначала проверь именно это.
 
----
+1. Открой **Visual Studio Installer**.
+2. Найди **Visual Studio 2022 Build Tools** (или Visual Studio 2022) и нажми **Modify**.
+3. Во вкладке **Workloads** поставь галочку:
+   - ✅ **Desktop development with C++**
+4. Во вкладке **Individual components** проверь, что выбраны:
+   - ✅ MSVC v143 (x64/x86 build tools)
+   - ✅ Windows 10/11 SDK
+   - ✅ C++ CMake tools for Windows (желательно)
+5. Нажми **Modify/Install** и дождись окончания.
+6. Перезапусти терминал/VS Code.
 
-## 1) Минимальные требования
-
-На Windows должны быть:
-- CMake
-- Компилятор C++ для Windows (любой один вариант):
-  - Visual Studio 2022 Build Tools + workload `Desktop development with C++` (рекомендуется)
-  - или Ninja + clang++/g++ (альтернатива)
-
-Проверка:
-
-```powershell
-cmake --version
-```
-
-Если Visual Studio toolchain установлен, дополнительно:
+Проверка после установки:
 
 ```powershell
 cl
+cmake --version
 ```
+
+Если `cl` не найден, toolchain всё ещё не установлен корректно.
 
 ---
 
-## 2) ОДНА команда на билд (рекомендуется)
+## 1) Один НОРМАЛЬНЫЙ способ сборки (рекомендуется)
 
-Запусти из корня проекта:
+Запускать **из корня репозитория** (`там где CMakeLists.txt`):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -BuildDir build -Config Release
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& '.\\scripts\\build.ps1' -BuildDir '.build' -Config Release -Clean"
 ```
 
-Что делает скрипт:
-- автоматически выбирает генератор:
-  - `Visual Studio 17 2022`, если VS найден;
-  - иначе `Ninja`, если он есть;
-- корректно завершает сборку с ошибкой, если configure/build упал;
-- показывает фактический путь к `V2RayPort.exe`.
+Что это даёт:
+- не создаёт «мусор» по разным папкам (всё в `.build`);
+- перед сборкой чистит старую сборку (`-Clean`);
+- автоматически выбирает генератор (Visual Studio или Ninja);
+- падает с ошибкой, если конфиг/билд реально не прошли.
+
+Готовый exe:
+- если Visual Studio generator: `.build\Release\V2RayPort.exe`
+- если Ninja generator: `.build\V2RayPort.exe`
 
 ---
 
-## 3) Если хочешь без скрипта — команды руками
+## 2) Почему у тебя «нет папки Release»
 
-### Вариант A (есть Visual Studio Build Tools)
+Это нормально, если выбран **Ninja** (single-config генератор).
 
-```powershell
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-cmake --build build --config Release
-```
-
-EXE будет в:
-- `build\Release\V2RayPort.exe`
-
-### Вариант B (нет Visual Studio, но есть Ninja + компилятор)
-
-```powershell
-cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-```
-
-EXE будет в:
-- `build\V2RayPort.exe`
-
-> Поэтому у тебя могло «не быть папки Release» — это нормально для `Ninja`.
+- Visual Studio generator → есть `Release` подпапка.
+- Ninja generator → `Release` подпапки нет, exe лежит прямо в `.build\`.
 
 ---
 
-## 4) Скачивание runtime (xray + wintun)
+## 3) Runtime (xray + wintun) без мусора
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1 -OutputDir build
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& '.\\scripts\\fetch-runtime.ps1' -OutputDir '.build'"
 ```
 
-После этого в `build\` будут:
-- `xray.exe`
-- `wintun.dll`
+Будет:
+- `.build\xray.exe`
+- `.build\wintun.dll`
 
-Если билдил через Visual Studio и хочешь именно в `build\Release`:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1 -OutputDir build\Release
-```
-
-Скрипт чистит временные архивы автоматически.
+Временные архивы/распаковки удаляются автоматически.
 
 ---
 
-## 5) Частые ошибки и точные решения
+## 4) Если команда не запускается вообще
 
-### Ошибка: `Generator Visual Studio 17 2022 could not find any instance of Visual Studio`
+### Ошибка про ExecutionPolicy
 
-Причина: Visual Studio Build Tools не установлен (или установлен без C++ workload).
+Запусти так (в текущем окне):
 
-Решение:
-1. Установи Build Tools 2022 и workload `Desktop development with C++`.
-2. Либо используй Ninja-вариант (если есть `ninja` + компилятор).
-3. Для авто-выбора генератора запускай `scripts/build.ps1`.
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\build.ps1 -BuildDir .build -Config Release -Clean
+```
 
-### Ошибка: `cl.exe не найден`
+### Ошибка `Generator Visual Studio 17 2022 could not find any instance of Visual Studio`
 
-Причина: нет MSVC toolchain в текущей системе/терминале.
+Значит не установлен Build Tools 2022 с workload C++.
+Смотри раздел **0** и доустанови workload.
 
-Решение:
-- либо установить Build Tools,
-- либо собирать через Ninja с установленным clang++/g++.
-
-### Ошибка: `cmake не распознано`
+### Ошибка `cmake` не найден
 
 ```powershell
 winget install Kitware.CMake
 ```
 
-Перезапусти PowerShell после установки.
+Перезапусти PowerShell.
 
-### Ошибка: `#include <windows.h>`
+### Ошибка `#include <windows.h>`
 
-Нет Windows SDK.
-Установи в Visual Studio Installer компонент **Windows 10/11 SDK**.
+Не установлен Windows SDK.
+Установи компонент **Windows 10/11 SDK** через Visual Studio Installer.
 
 ---
 
-## 6) Запуск
+## 5) Запуск
 
-1. Запусти exe (см. путь в зависимости от генератора).
+1. Запусти `V2RayPort.exe` из `.build` (или `.build\Release`).
 2. Укажи пути к `xray.exe`, `config.json`, `wintun.dll`.
 3. Нажми «Запустить».
 

@@ -1,5 +1,5 @@
 param(
-    [string]$OutputDir = "build",
+    [string]$OutputDir = ".build",
     [string]$Arch = "64",
     [switch]$KeepTemp
 )
@@ -23,11 +23,11 @@ function Resolve-OutputDir([string]$requested) {
         return $requested
     }
 
-    if (Test-Path "build/Release") {
-        return "build/Release"
+    if (Test-Path ".build/Release") {
+        return ".build/Release"
     }
 
-    return "build"
+    return ".build"
 }
 
 Require-Command "Expand-Archive"

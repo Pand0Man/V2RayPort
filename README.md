@@ -4,233 +4,150 @@
 
 ## Что реализовано
 
-- C++ WinAPI-приложение с улучшенным интерфейсом (градиентный фон, аккуратная типографика, визуальные блоки);
-- анимации статуса: пульсирующий индикатор и progress marquee во время запуска;
-- выбор `xray.exe`;
-- выбор `config.json`;
-- опциональный выбор `wintun.dll` (добавляется в `PATH` перед запуском);
+- C++ WinAPI-приложение;
+- выбор `xray.exe` / `config.json` / `wintun.dll`;
 - запуск/остановка `xray.exe`;
-- онлайн-логи процесса в окне приложения;
-- сохранение последних путей (`v2rayport.ini`) для быстрого повторного запуска;
-- быстрые кнопки «Открыть папку runtime» и «Открыть папку config».
+- live-логи процесса;
+- сохранение последних путей (`v2rayport.ini`).
 
 ---
 
-## Подготовка runtime-файлов (оригинальные xray-core + wintun)
+## ВАЖНО: только командная сборка (без UI-шагов VS Code)
 
-В проект добавлен скрипт `scripts/fetch-runtime.ps1`, который:
-- скачивает **последний релиз Xray-core** с официального GitHub `XTLS/Xray-core`;
-- извлекает из релиза `xray.exe`;
-- скачивает официальный архив `wintun`;
-- извлекает `wintun.dll`;
-- кладёт оба файла в папку `build\Release/` (туда же, где билдится `V2RayPort.exe`);
-- после копирования автоматически удаляет zip-архивы и временные папки распаковки.
-
-Запуск (PowerShell):
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1
-```
-
-После этого получите:
-- `build\Release\xray.exe`
-- `build\Release\wintun.dll`
-
-Дополнительно:
-
-```powershell
-# указать папку/архитектуру явно
-powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1 -OutputDir build\Release -Arch 64
-
-# оставить временные файлы (архивы и распаковку)
-powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1 -KeepTemp
-```
+Ниже только рабочие команды. Никаких `Select a Kit` и других UI-этапов.
 
 ---
 
-## Супер-подробный гайд по сборке в VS Code (Windows)
+## 1) Минимальные требования
 
-Ниже — максимально практичный путь «с нуля», если не билдится.
+На Windows должны быть:
+- CMake
+- Компилятор C++ для Windows (любой один вариант):
+  - Visual Studio 2022 Build Tools + workload `Desktop development with C++` (рекомендуется)
+  - или Ninja + clang++/g++ (альтернатива)
 
-### Шаг 0. Что должно быть установлено
-
-Обязательно:
-1. **Visual Studio 2022 Build Tools** или полная **Visual Studio 2022**.
-2. Workload: **Desktop development with C++**.
-3. Компонент: **Windows 10/11 SDK**.
-4. **CMake** (можно отдельным инсталлером или из Visual Studio).
-5. **VS Code**.
-
-Быстрые команды установки (по желанию):
+Проверка:
 
 ```powershell
-winget install Kitware.CMake
-winget install Microsoft.VisualStudio.2022.BuildTools
-winget install Microsoft.VisualStudioCode
-```
-
-> После установки Build Tools проверь в Visual Studio Installer, что реально отмечены:
-> - MSVC v143
-> - Windows 10/11 SDK
-> - C++ CMake tools for Windows (желательно)
-
-### Шаг 1. Установка расширений в VS Code
-
-Открой VS Code → Extensions (`Ctrl+Shift+X`) и установи:
-- **C/C++** (ms-vscode.cpptools)
-- **CMake Tools** (ms-vscode.cmake-tools)
-
-### Шаг 2. Открытие проекта
-
-1. `File -> Open Folder...`
-2. Выбери папку проекта `V2RayPort`.
-3. Дождись индексации расширений.
-
-### Шаг 3. Запуск правильного терминала в VS Code
-
-Очень важно: обычный PowerShell может не видеть SDK/компилятор.
-
-Рекомендуется:
-1. `Terminal -> New Terminal`
-2. Нажать стрелку рядом с `+` в терминале и выбрать:
-   - **Developer PowerShell for VS 2022**
-   - или **x64 Native Tools Command Prompt for VS 2022**
-
-Проверка в терминале:
-
-```powershell
-cl
 cmake --version
 ```
 
-Если `cl` не найден — ты не в developer-shell.
-
-### Шаг 4. Начиная с `CMake: Select a Kit` — максимально просто
-
-Открой Command Palette (`Ctrl+Shift+P`) и делай **ровно в таком порядке**:
-
-1. `CMake: Scan for Kits`
-2. `CMake: Select a Kit`
-   - выбери пункт вроде: **Visual Studio Community 2022 Release - amd64**
-   - главное, чтобы было **2022** и **x64/amd64**
-3. `CMake: Select Build Variant` → выбери **Release**
-4. `CMake: Configure`
-5. `CMake: Build`
-
-Если всё ок, внизу VS Code будет `Build finished successfully`, а файл появится здесь:
-- `build\Release\V2RayPort.exe`
-
-### Шаг 5. Если в UI не получается — одна команда в PowerShell
-
-В терминале VS Code (лучше Developer PowerShell) выполни **одну команду**:
+Если Visual Studio toolchain установлен, дополнительно:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -BuildDir build -Config Release -Generator "Visual Studio 17 2022" -Arch x64
+cl
 ```
-
-Это самый надёжный вариант, потому что скрипт сам:
-- ищет `cmake` в `PATH`;
-- если не находит, ищет встроенный `cmake.exe` внутри Visual Studio;
-- предупреждает, если не найден `cl.exe`;
-- выполняет configure + build.
-
-### Шаг 6. Альтернатива: тоже одной командой, но без скрипта
-
-```powershell
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64; if ($?) { cmake --build build --config Release }
-```
-
-### Шаг 7. Подтянуть runtime рядом с exe
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1
-```
-
-После этого рядом с exe будут:
-- `build\Release\xray.exe`
-- `build\Release\wintun.dll`
-
-### Шаг 8. Запуск
-
-1. Запусти `build\Release\V2RayPort.exe`.
-2. Укажи пути к `xray.exe`, `config.json`, `wintun.dll`.
-3. Нажми **«Запустить»**.
 
 ---
 
-## Быстрый CLI-вариант сборки (без UI VS Code)
+## 2) ОДНА команда на билд (рекомендуется)
+
+Запусти из корня проекта:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -BuildDir build -Config Release
+```
+
+Что делает скрипт:
+- автоматически выбирает генератор:
+  - `Visual Studio 17 2022`, если VS найден;
+  - иначе `Ninja`, если он есть;
+- корректно завершает сборку с ошибкой, если configure/build упал;
+- показывает фактический путь к `V2RayPort.exe`.
+
+---
+
+## 3) Если хочешь без скрипта — команды руками
+
+### Вариант A (есть Visual Studio Build Tools)
 
 ```powershell
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 cmake --build build --config Release
 ```
 
-Или в одну строку:
+EXE будет в:
+- `build\Release\V2RayPort.exe`
+
+### Вариант B (нет Visual Studio, но есть Ninja + компилятор)
 
 ```powershell
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64; if ($?) { cmake --build build --config Release }
+cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+cmake --build build
 ```
+
+EXE будет в:
+- `build\V2RayPort.exe`
+
+> Поэтому у тебя могло «не быть папки Release» — это нормально для `Ninja`.
 
 ---
 
-## Решение частых ошибок в VS Code
+## 4) Скачивание runtime (xray + wintun)
 
-### Ошибка: `cmake : Имя "cmake" не распознано...`
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1 -OutputDir build
+```
 
-Причина: CMake не установлен или не в PATH.
+После этого в `build\` будут:
+- `xray.exe`
+- `wintun.dll`
+
+Если билдил через Visual Studio и хочешь именно в `build\Release`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1 -OutputDir build\Release
+```
+
+Скрипт чистит временные архивы автоматически.
+
+---
+
+## 5) Частые ошибки и точные решения
+
+### Ошибка: `Generator Visual Studio 17 2022 could not find any instance of Visual Studio`
+
+Причина: Visual Studio Build Tools не установлен (или установлен без C++ workload).
 
 Решение:
-1. Запусти `scripts/build.ps1`.
-2. Если не помогло — установи CMake:
+1. Установи Build Tools 2022 и workload `Desktop development with C++`.
+2. Либо используй Ninja-вариант (если есть `ninja` + компилятор).
+3. Для авто-выбора генератора запускай `scripts/build.ps1`.
+
+### Ошибка: `cl.exe не найден`
+
+Причина: нет MSVC toolchain в текущей системе/терминале.
+
+Решение:
+- либо установить Build Tools,
+- либо собирать через Ninja с установленным clang++/g++.
+
+### Ошибка: `cmake не распознано`
 
 ```powershell
 winget install Kitware.CMake
 ```
 
-3. Полностью перезапусти VS Code.
+Перезапусти PowerShell после установки.
 
-### Ошибка: `#include <windows.h>` (как на твоём скрине)
+### Ошибка: `#include <windows.h>`
 
-Причина:
-- не установлен Windows SDK,
-- не установлен workload C++,
-- открыт не developer-shell.
-
-Решение:
-1. В Visual Studio Installer включи **Desktop development with C++**.
-2. Проверь, что установлен **Windows 10/11 SDK**.
-3. В VS Code используй **Developer PowerShell for VS 2022**.
-4. Проверь:
-
-```powershell
-cl
-where cl
-```
-
-5. Повтори сборку через:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
-```
-
-### CMake Tools пишет, что не найден kit
-
-1. `Ctrl+Shift+P` → `CMake: Scan for Kits`
-2. Затем `CMake: Select a Kit` → Visual Studio 2022 x64
-3. `CMake: Delete Cache and Reconfigure`
-
-### CMake Cache сломан после неудачных попыток
-
-```powershell
-Remove-Item -Recurse -Force .\build
-powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
-```
+Нет Windows SDK.
+Установи в Visual Studio Installer компонент **Windows 10/11 SDK**.
 
 ---
 
-## Ограничения текущего MVP
+## 6) Запуск
 
-- Пока это desktop-оболочка вокруг `xray.exe`, а не полный клон мобильного V2RayTun;
+1. Запусти exe (см. путь в зависимости от генератора).
+2. Укажи пути к `xray.exe`, `config.json`, `wintun.dll`.
+3. Нажми «Запустить».
+
+---
+
+## Ограничения MVP
+
+- Это пока desktop-оболочка вокруг `xray.exe`;
 - нет профилей/подписок;
 - нет системного прокси/трея/автозапуска;
 - нет полного TUN-менеджмента как в мобильных клиентах.

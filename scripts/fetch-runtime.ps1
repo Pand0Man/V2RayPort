@@ -1,5 +1,5 @@
 param(
-    [string]$OutputDir = "build/Release",
+    [string]$OutputDir = "build",
     [string]$Arch = "64",
     [switch]$KeepTemp
 )
@@ -13,15 +13,28 @@ function Require-Command($name) {
 }
 
 function Remove-IfExists($path) {
-    if (Test-Path $path) {
+    if ($path -and (Test-Path $path)) {
         Remove-Item -Recurse -Force $path
     }
 }
 
+function Resolve-OutputDir([string]$requested) {
+    if ($requested -and $requested -ne "") {
+        return $requested
+    }
+
+    if (Test-Path "build/Release") {
+        return "build/Release"
+    }
+
+    return "build"
+}
+
 Require-Command "Expand-Archive"
 
-New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
-$absOut = (Resolve-Path $OutputDir).Path
+$resolvedOutputDir = Resolve-OutputDir $OutputDir
+New-Item -ItemType Directory -Force -Path $resolvedOutputDir | Out-Null
+$absOut = (Resolve-Path $resolvedOutputDir).Path
 
 $xrayZip = $null
 $xrayExtract = $null
@@ -71,7 +84,7 @@ try {
     }
     Copy-Item -Force $wintunDll.FullName (Join-Path $absOut "wintun.dll")
 
-    Write-Host "[4/5] Runtime files are ready in build output folder"
+    Write-Host "[4/5] Runtime files are ready:"
     Write-Host " - $(Join-Path $absOut 'xray.exe')"
     Write-Host " - $(Join-Path $absOut 'wintun.dll')"
 }

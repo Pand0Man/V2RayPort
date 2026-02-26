@@ -23,7 +23,8 @@
 - извлекает из релиза `xray.exe`;
 - скачивает официальный архив `wintun`;
 - извлекает `wintun.dll`;
-- кладёт оба файла в папку `runtime/`.
+- кладёт оба файла в папку `build\Release/` (туда же, где билдится `V2RayPort.exe`);
+- после копирования автоматически удаляет zip-архивы и временные папки распаковки.
 
 Запуск (PowerShell):
 
@@ -32,14 +33,18 @@ powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1
 ```
 
 После этого получите:
-- `runtime\xray.exe`
-- `runtime\wintun.dll`
+- `build\Release\xray.exe`
+- `build\Release\wintun.dll`
 
-> Если хочешь другой OutputDir или архитектуру, используй параметры:
->
-> ```powershell
-> powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1 -OutputDir runtime -Arch 64
-> ```
+Дополнительно:
+
+```powershell
+# указать папку/архитектуру явно
+powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1 -OutputDir build\Release -Arch 64
+
+# оставить временные файлы (архивы и распаковку)
+powershell -ExecutionPolicy Bypass -File .\scripts\fetch-runtime.ps1 -KeepTemp
+```
 
 ---
 
@@ -82,9 +87,9 @@ cmake --build build --config Release
 ## Запуск приложения
 
 1. Запусти `build\Release\V2RayPort.exe`.
-2. В поле **xray.exe** укажи `runtime\xray.exe` (или свой путь).
+2. В поле **xray.exe** укажи `build\Release\xray.exe` (или свой путь).
 3. В поле **config.json** укажи рабочий конфиг Xray.
-4. В поле **wintun.dll** укажи `runtime\wintun.dll` (если используешь TUN/драйверные сценарии).
+4. В поле **wintun.dll** укажи `build\Release\wintun.dll` (если используешь TUN/драйверные сценарии).
 5. Нажми **«Запустить»**.
 
 ---
